@@ -59,20 +59,61 @@ else:
     st.title("Nepal Tourist Guide")
     st.write("Please log in to continue.")
 
-    # --- Username/Password Login ---
-    st.subheader("Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    # ------------------ LOGIN / SIGNUP ------------------
+st.subheader("Login")
+
+# Initialize a users database in session state (in-memory)
+if "users_db" not in st.session_state:
+    st.session_state.users_db = {"admin": "Admin1234"}  # default user
+
+login_tab, signup_tab = st.tabs(["Login", "Sign Up"])
+
+# ------------------ LOGIN TAB ------------------
+with login_tab:
+    username = st.text_input("Username", key="login_user")
+    password = st.text_input("Password", type="password", key="login_pass")
     if st.button("Login"):
-        # Example credentials
-        valid_users = {"admin": "input("enter your username")", "guest": "input("enter your password")"}  # replace with your users
-        if username in valid_users and valid_users[username] == password:
+        if username in st.session_state.users_db and st.session_state.users_db[username] == password:
             st.session_state.user_info = {"name": username}
+            st.success(f"Welcome, {username}!")
             st.experimental_rerun()
         else:
             st.error("Invalid username or password")
 
-    st.markdown("---")
+# ------------------ SIGNUP TAB ------------------
+with signup_tab:
+    st.markdown("""
+**Signup Rules:**  
+- Username must be lowercase letters only  
+- Maximum 15 characters  
+- Password must include at least one number  
+- Confirm password must match
+""")
+    new_user = st.text_input("Choose Username", key="signup_user")
+    new_pass = st.text_input("Choose Password", type="password", key="signup_pass")
+    confirm_pass = st.text_input("Confirm Password", type="password", key="signup_confirm")
+
+    if st.button("Sign Up"):
+        # Validation
+        if not new_user.islower():
+            st.error("Username must be lowercase letters only")
+        elif len(new_user) > 15:
+            st.error("Username cannot exceed 15 characters")
+        elif any(char.isdigit() for char in new_user):
+            st.error("Username cannot contain numbers")
+        elif len(new_pass) < 6:
+            st.error("Password must be at least 6 characters")
+        elif not any(char.isdigit() for char in new_pass):
+            st.error("Password must contain at least one number")
+        elif new_pass != confirm_pass:
+            st.error("Passwords do not match")
+        elif new_user in st.session_state.users_db:
+            st.error("Username already exists")
+        else:
+            # Save new user
+            st.session_state.users_db[new_user] = new_pass
+            st.success("Account created successfully! You can now login.")
+
 
     # --- Google Login ---
     st.subheader("Or login with Google")
@@ -192,6 +233,7 @@ for it in DATA["itineraries"]:
                 st.markdown(f"- {place['name']} ({place['district']})")
 
 st.divider()
+
 
 
 
