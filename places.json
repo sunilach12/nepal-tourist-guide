@@ -1,39 +1,37 @@
 {
   "places": [
     {
-      "id": "pashupatinath",
+      "id": 1,
       "name": "Pashupatinath Temple",
       "district": "Kathmandu",
-      "category": "Temple",
-      "description": "UNESCO site on the Bagmati river. Best visited early morning.",
-      "lat": 27.7100,
-      "lng": 85.3480,
-      "hours": "5:00–19:00",
-      "fees": "Entry fee for foreigners",
-      "tips": "Dress respectfully; photography restricted in inner areas.",
+      "category": "Religious",
+      "lat": 27.7104,
+      "lng": 85.3488,
+      "description": "A sacred Hindu temple dedicated to Lord Shiva.",
+      "hours": "4 AM - 9 PM",
+      "fees": "Free (Foreigners: NPR 1000)",
+      "tips": "Dress modestly",
       "images": []
     },
     {
-      "id": "bhaktapur-durbar",
-      "name": "Bhaktapur Durbar Square",
-      "district": "Bhaktapur",
-      "category": "Heritage",
-      "description": "Historic square with Nyatapola Temple and traditional craft.",
-      "lat": 27.6727,
-      "lng": 85.4274,
-      "hours": "6:00–18:00",
-      "fees": "Entry fee applies",
-      "tips": "Try juju dhau (curd) and explore side alleys.",
+      "id": 2,
+      "name": "Pokhara Lakeside",
+      "district": "Kaski",
+      "category": "Nature",
+      "lat": 28.2096,
+      "lng": 83.9856,
+      "description": "Beautiful lakeside area with mountain views.",
+      "hours": "All day",
+      "fees": "Free",
+      "tips": "Best at sunset",
       "images": []
     }
   ],
   "itineraries": [
     {
-      "id": "ktm-1d",
-      "name": "Kathmandu highlights",
-      "days": 1,
-      "districts": ["Kathmandu", "Bhaktapur"],
-      "stops": ["pashupatinath", "bhaktapur-durbar"]
+      "name": "3 Days in Nepal",
+      "days": 3,
+      "stops": [1, 2]
     }
   ]
 }
