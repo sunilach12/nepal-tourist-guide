@@ -79,7 +79,7 @@ else:
     login_url = get_authorization_url()
     st.markdown(
         f'<a href="{login_url}" style="display: inline-flex; align-items: center; text-decoration: none; background-color: #4285F4; color: white; padding: 8px 12px; border-radius: 4px;">'
-        f'<img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" style="margin-right:8px;"> Login with Google</a>',
+        f'<img src="F:\sunil prf\Downloads\search_281781.png" width="20" style="margin-right:8px;"> Login with Google</a>',
         unsafe_allow_html=True
     )
     st.stop()
@@ -181,3 +181,4 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
+
