@@ -11,7 +11,7 @@ st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
 # ------------------ GOOGLE OAUTH CONFIG ------------------
 CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
-REDIRECT_URI = "https://YOUR-APP-NAME.streamlit.app"  # Replace with your app URL
+REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app"  # Replace with your app URL
 
 AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -147,3 +147,4 @@ def t(key):
 
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
+
