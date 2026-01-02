@@ -5,12 +5,6 @@ import folium
 from streamlit_folium import st_folium
 from authlib.integrations.requests_client import OAuth2Session
 
-credentials = {
-    "usernames": {
-        "admin": {"name": "Admin User", "password": "1234"},
-        "guest": {"name": "Guest User", "password": "guest"}
-    }
-}
 
 # ------------------ 1. PAGE CONFIG MUST BE FIRST ------------------
 st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
@@ -83,6 +77,13 @@ else:
     st.link_button("Login with Google", login_url)
     st.stop()
 
+# ------------------ LOGOUT BUTTON ------------------
+st.sidebar.markdown(f"👤 **{user_info['name']}**")
+st.sidebar.markdown("---")
+if st.sidebar.button("Logout"):
+    st.session_state.user_info = None
+    st.experimental_rerun()
+
 # ------------------ APP CONTENT (Only runs if logged in) ------------------
 
 st.success(f"Welcome, {user_info['name']}!")
@@ -109,7 +110,6 @@ def t(key):
 
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
-st.sidebar.markdown(f"👤 **{user_info['name']}**")
 
 # ------------------ FILTERS ------------------
 col1, col2, col3 = st.columns(3)
@@ -175,5 +175,3 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
-
-
