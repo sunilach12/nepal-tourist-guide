@@ -3,32 +3,47 @@ import json
 from pathlib import Path
 import folium
 from streamlit_folium import st_folium
+from authlib.integrations.requests_client import OAuth2Session
 
-# Import OAuth from streamlit-oauth
-from streamlit_oauth import OAuth
+# ------------------ GOOGLE OAUTH CONFIG ------------------
+CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
+REDIRECT_URI = "https://YOUR-APP-NAME.streamlit.app"  # Replace with your deployed app URL
 
-# Load Google OAuth credentials from Streamlit secrets
-GOOGLE_CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
-GOOGLE_CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
+AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
+TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo"
 
-# Initialize OAuth
-oauth = OAuth(
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-    redirect_uri="https://YOUR-APP-NAME.streamlit.app"  # Replace with your deployed URL
-)
+def get_authorization_url():
+    client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, scope="openid email profile", redirect_uri=REDIRECT_URI)
+    uri, state = client.create_authorization_url(AUTHORIZATION_ENDPOINT)
+    st.session_state['oauth_state'] = state
+    return uri
 
-# Run login flow
-user = oauth.login()
+def fetch_token(code):
+    client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, redirect_uri=REDIRECT_URI, state=st.session_state.get('oauth_state'))
+    token = client.fetch_token(TOKEN_ENDPOINT, code=code)
+    return token
 
-if not user:
-    st.info("Please log in with Google to continue.")
+def get_userinfo(token):
+    client = OAuth2Session(CLIENT_ID, CLIENT_SECRET, token=token)
+    resp = client.get(USERINFO_ENDPOINT)
+    return resp.json()
+
+# ------------------ LOGIN FLOW ------------------
+query_params = st.experimental_get_query_params()
+
+if "code" not in query_params:
+    login_url = get_authorization_url()
+    st.markdown(f"[Login with Google]({login_url})")
     st.stop()
 
-# User is logged in
-st.success(f"Welcome, {user['name']}!")
+code = query_params["code"][0]
+token = fetch_token(code)
+user_info = get_userinfo(token)
+st.success(f"Welcome, {user_info['name']}!")
 
-# --------------- Load data ---------------
+# ------------------ LOAD DATA ------------------
 DATA_FILE = Path("places.json")
 TRANSLATION_FILE = Path("translations.json")
 
@@ -43,7 +58,7 @@ def load_json(path, default):
 DATA = load_json(DATA_FILE, {"places": [], "itineraries": []})
 TRANSLATIONS = load_json(TRANSLATION_FILE, {"English": {}, "Nepali": {}})
 
-# --------------- Language selection ---------------
+# ------------------ LANGUAGE ------------------
 lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
 def t(key):
     return TRANSLATIONS.get(lang, {}).get(key, key)
@@ -51,9 +66,9 @@ def t(key):
 st.set_page_config(page_title=t("Nepal Tourist Guide"), layout="wide")
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
-st.sidebar.markdown(f"👤 **{user['name']}**")
+st.sidebar.markdown(f"👤 **{user_info['name']}**")
 
-# --------------- Filters ---------------
+# ------------------ FILTERS ------------------
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -82,7 +97,7 @@ def matches(p):
 
 filtered_places = [p for p in DATA["places"] if matches(p)]
 
-# --------------- Map ---------------
+# ------------------ MAP ------------------
 st.subheader(t("Map View"))
 m = folium.Map(location=[27.7, 85.3], zoom_start=7)
 
@@ -91,7 +106,7 @@ for p in filtered_places:
 
 st_folium(m, width=800, height=450)
 
-# --------------- Places ---------------
+# ------------------ PLACES ------------------
 st.subheader(t("Places"))
 
 for p in filtered_places:
@@ -103,9 +118,9 @@ for p in filtered_places:
         if p.get("images"):
             st.image(p["images"], width=300)
         maps_url = f'https://www.google.com/maps?q={p["lat"]},{p["lng"]}'
-        st.link_button(t("Open in Google Maps"), maps_url)
+        st.markdown(f"[{t('Open in Google Maps')}]({maps_url})")
 
-# --------------- Itineraries ---------------
+# ------------------ ITINERARIES ------------------
 st.subheader(t("Itineraries"))
 
 for it in DATA["itineraries"]:
