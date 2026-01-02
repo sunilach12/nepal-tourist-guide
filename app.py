@@ -5,6 +5,13 @@ import folium
 from streamlit_folium import st_folium
 from authlib.integrations.requests_client import OAuth2Session
 
+credentials = {
+    "usernames": {
+        "admin": {"name": "Admin User", "password": "1234"},
+        "guest": {"name": "Guest User", "password": "guest"}
+    }
+}
+
 # ------------------ 1. PAGE CONFIG MUST BE FIRST ------------------
 st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
 
@@ -168,4 +175,5 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
+
 
