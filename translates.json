@@ -1,0 +1,34 @@
+{
+  "English": {
+    "Nepal Tourist Guide": "Nepal Tourist Guide",
+    "Discover places across districts, plan itineraries, and view maps.": "Discover places across districts, plan itineraries, and view maps.",
+    "District": "District",
+    "Category": "Category",
+    "Search (name/tips)": "Search (name/tips)",
+    "Hours": "Hours",
+    "Fees": "Fees",
+    "Tips": "Tips",
+    "Open in Google Maps": "Open in Google Maps",
+    "Places": "Places",
+    "Itineraries": "Itineraries",
+    "days": "days",
+    "Map View": "Map View",
+    "Add data by editing places.json. You can later connect an admin UI.": "Add data by editing places.json. You can later connect an admin UI."
+  },
+  "Nepali": {
+    "Nepal Tourist Guide": "नेपाल पर्यटक गाइड",
+    "Discover places across districts, plan itineraries, and view maps.": "जिल्ला अनुसार स्थानहरू हेर्नुहोस्, योजना बनाउनुहोस्, र नक्सा हेर्नुहोस्।",
+    "District": "जिल्ला",
+    "Category": "प्रकार",
+    "Search (name/tips)": "खोज्नुहोस् (नाम/सुझाव)",
+    "Hours": "समय",
+    "Fees": "शुल्क",
+    "Tips": "सुझाव",
+    "Open in Google Maps": "गुगल नक्सामा खोल्नुहोस्",
+    "Places": "स्थानहरू",
+    "Itineraries": "योजना",
+    "days": "दिनहरू",
+    "Map View": "नक्सा दृश्य",
+    "Add data by editing places.json. You can later connect an admin UI.": "places.json सम्पादन गरेर डाटा थप्नुहोस्। पछि admin UI जोड्न सकिन्छ।"
+  }
+}
