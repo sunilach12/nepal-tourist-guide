@@ -60,12 +60,12 @@ else:
     st.write("Please log in to continue.")
 
     # --- Username/Password Login ---
-    st.subheader("Login with Username/Password")
+    st.subheader("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
         # Example credentials
-        valid_users = {"admin": "1234", "guest": "guest"}  # replace with your users
+        valid_users = {"admin": "input("enter your username")", "guest": "input("enter your password")"}  # replace with your users
         if username in valid_users and valid_users[username] == password:
             st.session_state.user_info = {"name": username}
             st.experimental_rerun()
@@ -79,17 +79,18 @@ else:
     login_url = get_authorization_url()
     st.markdown(
         f'<a href="{login_url}" style="display: inline-flex; align-items: center; text-decoration: none; background-color: #4285F4; color: white; padding: 8px 12px; border-radius: 4px;">'
-        f'<img src="F:\sunil prf\Downloads\search_281781.png" width="20" style="margin-right:8px;"> Login with Google</a>',
+        f'<img src="F:\sunil prf\Downloads\search_281781.png" width="20" style="margin-right:4px;"> Login with Google</a>',
         unsafe_allow_html=True
     )
     st.stop()
 
 # ------------------ LOGOUT BUTTON ------------------
-st.sidebar.markdown(f"👤 **{user_info['name']}**")
-st.sidebar.markdown("---")
-if st.sidebar.button("Logout"):
-    st.session_state.user_info = None
-    st.experimental_rerun()
+if st.session_state.get("user_info"):
+    st.sidebar.markdown(f"👤 **{st.session_state['user_info']['name']}**")
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Logout"):
+        st.session_state.user_info = None
+        st.experimental_rerun()
 
 # ------------------ APP CONTENT ------------------
 st.success(f"Welcome, {user_info['name']}!")
@@ -116,6 +117,17 @@ def t(key):
 
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
+
+# ------------------ CONTACT INFORMATION ------------------
+st.sidebar.markdown("---")
+st.sidebar.subheader("📞 Contact Info")
+st.sidebar.markdown("""
+**Police:** 100  
+**Emergency:** 112  
+**Tourist Office:** +977-1-4212345  
+**Email:** info@nepaltouristguide.com  
+**Address:** Kathmandu, Nepal
+""")
 
 # ------------------ FILTERS ------------------
 col1, col2, col3 = st.columns(3)
@@ -180,5 +192,6 @@ for it in DATA["itineraries"]:
                 st.markdown(f"- {place['name']} ({place['district']})")
 
 st.divider()
-st.caption(t("Edit places.json to add more data."))
+
+
 
