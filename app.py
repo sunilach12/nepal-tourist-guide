@@ -73,8 +73,8 @@ else:
             st.error("Invalid username or password")
 
     st.markdown("---")
-    
-      # --- Google Login ---
+
+    # --- Google Login ---
     st.subheader("Or login with Google")
     login_url = get_authorization_url()
     st.markdown(
@@ -83,7 +83,6 @@ else:
         unsafe_allow_html=True
     )
     st.stop()
-    
 
 # ------------------ LOGOUT BUTTON ------------------
 st.sidebar.markdown(f"👤 **{user_info['name']}**")
@@ -117,25 +116,6 @@ def t(key):
 
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
-
-# ------------------ LANGUAGE ------------------
-lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
-def t(key):
-    return TRANSLATIONS.get(lang, {}).get(key, key)
-
-st.title(t("Nepal Tourist Guide"))
-st.caption(t("Discover places across districts, plan itineraries, and view maps."))
-
-# ------------------ CONTACT INFORMATION ------------------
-st.sidebar.markdown("---")
-st.sidebar.subheader("📞 Contact Info")
-st.sidebar.markdown("""
-**Police:** 100  
-**Emergency:** 112  
-**Tourist Office:** +977-1-4212345  
-**Email:** info@nepaltouristguide.com  
-**Address:** Kathmandu, Nepal
-""")
 
 # ------------------ FILTERS ------------------
 col1, col2, col3 = st.columns(3)
@@ -201,4 +181,3 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
-
