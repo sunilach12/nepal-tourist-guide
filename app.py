@@ -4,85 +4,118 @@ from pathlib import Path
 import folium
 from streamlit_folium import st_folium
 
-# Load data files
+# ------------------ CONFIG ------------------
+st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
+
 DATA_FILE = Path("places.json")
 TRANSLATION_FILE = Path("translations.json")
 USERS_FILE = Path("users.json")
 
-DATA = json.loads(DATA_FILE.read_text(encoding="utf-8")) if DATA_FILE.exists() else {}
-TRANSLATIONS = json.loads(TRANSLATION_FILE.read_text(encoding="utf-8")) if TRANSLATION_FILE.exists() else {}
-USERS = json.loads(USERS_FILE.read_text(encoding="utf-8")) if USERS_FILE.exists() else {}
+# ------------------ SAFE JSON LOADER ------------------
+def load_json(path, default):
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return default
 
-# Login screen
+DATA = load_json(DATA_FILE, {"places": [], "itineraries": []})
+TRANSLATIONS = load_json(TRANSLATION_FILE, {"English": {}, "Nepali": {}})
+USERS = load_json(USERS_FILE, {})
+
+# ------------------ LOGIN ------------------
 if "user" not in st.session_state:
     st.title("🔐 Nepal Tourist Guide Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
+
     if st.button("Login"):
         if username in USERS and USERS[username] == password:
             st.session_state.user = username
             st.success("Login successful!")
             st.experimental_rerun()
         else:
-            st.error("Wrong Password Try Again !!!")
+            st.error("Wrong username or password")
+
     st.stop()
 
-# Language toggle
+# ------------------ LANGUAGE ------------------
 lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
-def t(key): return TRANSLATIONS.get(lang, {}).get(key, key)
 
-st.set_page_config(page_title=t("Nepal Tourist Guide"), layout="wide")
+def t(key):
+    return TRANSLATIONS.get(lang, {}).get(key, key)
+
+# ------------------ HEADER ------------------
 st.title(t("Nepal Tourist Guide"))
-st.caption(t("Discover places across districts, plan itineraries, and view maps."))
+st.caption(t("Discover places, plan itineraries, and explore maps."))
+st.sidebar.markdown(f"👤 **{st.session_state.user}**")
 
-# Filters
-cols = st.columns(4)
-with cols[0]:
-    district = st.selectbox(t("District"), ["All"] + sorted({p["district"] for p in DATA["places"]}))
-with cols[1]:
-    category = st.selectbox(t("Category"), ["All"] + sorted({p["category"] for p in DATA["places"]}))
-with cols[2]:
-    q = st.text_input(t("Search (name/tips)"))
-with cols[3]:
-    st.markdown(f"👤 {st.session_state.user}")
+# ------------------ FILTERS ------------------
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    district = st.selectbox(
+        t("District"),
+        ["All"] + sorted({p["district"] for p in DATA["places"]})
+    )
+
+with col2:
+    category = st.selectbox(
+        t("Category"),
+        ["All"] + sorted({p["category"] for p in DATA["places"]})
+    )
+
+with col3:
+    search = st.text_input(t("Search"))
 
 def matches(p):
-    if district != "All" and p["district"] != district: return False
-    if category != "All" and p["category"] != category: return False
-    if q and q.lower() not in (p["name"] + " " + p.get("tips","")).lower(): return False
+    if district != "All" and p["district"] != district:
+        return False
+    if category != "All" and p["category"] != category:
+        return False
+    if search and search.lower() not in (p["name"] + " " + p.get("tips", "")).lower():
+        return False
     return True
 
-filtered = [p for p in DATA["places"] if matches(p)]
+filtered_places = [p for p in DATA["places"] if matches(p)]
 
-# Map view
+# ------------------ MAP ------------------
 st.subheader(t("Map View"))
-m = folium.Map(location=[27.7, 85.3], zoom_start=8)
-for p in filtered:
-    folium.Marker([p["lat"], p["lng"]], popup=p["name"]).add_to(m)
-st_folium(m, width=700, height=400)
+m = folium.Map(location=[27.7, 85.3], zoom_start=7)
 
-# Places section
+for p in filtered_places:
+    folium.Marker(
+        [p["lat"], p["lng"]],
+        popup=p["name"]
+    ).add_to(m)
+
+st_folium(m, width=800, height=450)
+
+# ------------------ PLACES ------------------
 st.subheader(t("Places"))
-for p in filtered:
+
+for p in filtered_places:
     with st.expander(f'{p["name"]} — {p["district"]} ({p["category"]})'):
         st.write(p["description"])
-        st.write(f'{t("Hours")}: {p["hours"]} | {t("Fees")}: {p["fees"]}')
-        st.write(f'{t("Tips")}: {p.get("tips", "—")}')
+        st.write(f'🕒 {t("Hours")}: {p["hours"]}')
+        st.write(f'💰 {t("Fees")}: {p["fees"]}')
+        st.write(f'💡 {t("Tips")}: {p.get("tips", "—")}')
         if p.get("images"):
-            st.image(p["images"], width=240)
+            st.image(p["images"], width=300)
+
         maps_url = f'https://www.google.com/maps?q={p["lat"]},{p["lng"]}'
         st.link_button(t("Open in Google Maps"), maps_url)
 
-# Itineraries section
+# ------------------ ITINERARIES ------------------
 st.subheader(t("Itineraries"))
+
 for it in DATA["itineraries"]:
     with st.expander(f'{it["name"]} — {it["days"]} {t("days")}'):
         for pid in it["stops"]:
             place = next((x for x in DATA["places"] if x["id"] == pid), None)
             if place:
-                st.markdown(f'- {place["name"]} ({place["district"]})')
+                st.markdown(f"- {place['name']} ({place['district']})")
 
 st.divider()
-st.caption(t("Add data by editing places.json. You can later connect an admin UI."))
-
-
+st.caption(t("Edit places.json to add more data."))
