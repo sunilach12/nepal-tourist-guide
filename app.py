@@ -9,7 +9,7 @@ DATA_FILE = Path("places.json")
 TRANSLATION_FILE = Path("translations.json")
 USERS_FILE = Path("users.json")
 
-DATA = json.loads(DATA_FILE.read_text(encoding="utf-8")) if DATA_FILE.exists() else {"places": [], "itineraries": []}
+DATA = json.loads(DATA_FILE.read_text(encoding="utf-8")) if DATA_FILE.exists() else {}
 TRANSLATIONS = json.loads(TRANSLATION_FILE.read_text(encoding="utf-8")) if TRANSLATION_FILE.exists() else {}
 USERS = json.loads(USERS_FILE.read_text(encoding="utf-8")) if USERS_FILE.exists() else {}
 
@@ -84,4 +84,5 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Add data by editing places.json. You can later connect an admin UI."))
+
 
