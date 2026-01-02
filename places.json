@@ -1,0 +1,39 @@
+{
+  "places": [
+    {
+      "id": "pashupatinath",
+      "name": "Pashupatinath Temple",
+      "district": "Kathmandu",
+      "category": "Temple",
+      "description": "UNESCO site on the Bagmati river. Best visited early morning.",
+      "lat": 27.7100,
+      "lng": 85.3480,
+      "hours": "5:00–19:00",
+      "fees": "Entry fee for foreigners",
+      "tips": "Dress respectfully; photography restricted in inner areas.",
+      "images": []
+    },
+    {
+      "id": "bhaktapur-durbar",
+      "name": "Bhaktapur Durbar Square",
+      "district": "Bhaktapur",
+      "category": "Heritage",
+      "description": "Historic square with Nyatapola Temple and traditional craft.",
+      "lat": 27.6727,
+      "lng": 85.4274,
+      "hours": "6:00–18:00",
+      "fees": "Entry fee applies",
+      "tips": "Try juju dhau (curd) and explore side alleys.",
+      "images": []
+    }
+  ],
+  "itineraries": [
+    {
+      "id": "ktm-1d",
+      "name": "Kathmandu highlights",
+      "days": 1,
+      "districts": ["Kathmandu"],
+      "stops": ["pashupatinath", "bhaktapur-durbar"]
+    }
+  ]
+}
