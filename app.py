@@ -8,7 +8,7 @@ from authlib.integrations.requests_client import OAuth2Session
 # ------------------ GOOGLE OAUTH CONFIG ------------------
 CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
-REDIRECT_URI = "https://YOUR-APP-NAME.streamlit.app"  # Replace with your deployed app URL
+REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app"  # Replace with your deployed app URL
 
 AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -132,3 +132,4 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
+
