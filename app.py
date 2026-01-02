@@ -5,10 +5,14 @@ import folium
 from streamlit_folium import st_folium
 from authlib.integrations.requests_client import OAuth2Session
 
+# ------------------ 1. PAGE CONFIG MUST BE FIRST ------------------
+st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
+
 # ------------------ GOOGLE OAUTH CONFIG ------------------
 CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
-REDIRECT_URI = "https://nepal-tourist-guide-xyz123.streamlit.app"  # Replace with your deployed app URL
+# Ensure this matches exactly what is in Google Cloud Console
+REDIRECT_URI = "https://nepal-tourist-guide-xyz123.streamlit.app" 
 
 AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -30,17 +34,50 @@ def get_userinfo(token):
     resp = client.get(USERINFO_ENDPOINT)
     return resp.json()
 
-# ------------------ LOGIN FLOW ------------------
-query_params = st.experimental_get_query_params()
+# ------------------ LOGIN FLOW (CORRECTED) ------------------
 
-if "code" not in query_params:
+# 1. Initialize session state for user info
+if "user_info" not in st.session_state:
+    st.session_state.user_info = None
+
+# 2. Check for auth code in URL (works with newer Streamlit versions)
+code = st.query_params.get("code")
+
+# 3. Decision Logic
+if st.session_state.user_info:
+    # Case A: Already logged in
+    user_info = st.session_state.user_info
+
+elif code:
+    # Case B: Returning from Google with a code
+    try:
+        token = fetch_token(code)
+        user_info = get_userinfo(token)
+        
+        # Save to session state so we stay logged in
+        st.session_state.user_info = user_info
+        
+        # CRITICAL: Clear the code from URL and rerun to prevent the error
+        st.query_params.clear()
+        st.rerun()
+        
+    except Exception as e:
+        # If the code was invalid (e.g. refresh), clear it and show login again
+        st.error(f"Login error: {e}")
+        st.query_params.clear()
+        # Optional: st.stop() or let it fall through to login button
+
+else:
+    # Case C: Not logged in, no code -> Show Login Button
+    # Stop execution here so the rest of the app doesn't load
     login_url = get_authorization_url()
-    st.markdown(f"[Login with Google]({login_url})")
+    st.title("Nepal Tourist Guide")
+    st.write("Please log in to continue.")
+    st.link_button("Login with Google", login_url)
     st.stop()
 
-code = query_params["code"][0]
-token = fetch_token(code)
-user_info = get_userinfo(token)
+# ------------------ APP CONTENT (Only runs if logged in) ------------------
+
 st.success(f"Welcome, {user_info['name']}!")
 
 # ------------------ LOAD DATA ------------------
@@ -63,7 +100,6 @@ lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
 def t(key):
     return TRANSLATIONS.get(lang, {}).get(key, key)
 
-st.set_page_config(page_title=t("Nepal Tourist Guide"), layout="wide")
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
 st.sidebar.markdown(f"👤 **{user_info['name']}**")
@@ -132,5 +168,3 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
-
-
