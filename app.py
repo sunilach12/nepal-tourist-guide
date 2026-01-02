@@ -3,57 +3,34 @@ import json
 from pathlib import Path
 import folium
 from streamlit_folium import st_folium
-import os
-from streamlit_authenticator import Authenticate
+
+# Import OAuth from streamlit-oauth
 from streamlit_oauth import OAuth
 
-# ------------------ GOOGLE OAUTH LOGIN ------------------
+# Load Google OAuth credentials from Streamlit secrets
 GOOGLE_CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
 
+# Initialize OAuth
 oauth = OAuth(
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
-    redirect_uri="https://YOUR-APP-NAME.streamlit.app" 
-)# replace with your app URL
-user = oauth.login()
-
-if user:
-    st.success(f"Welcome, {user['name']}!")
-    # Your full app code here
-else:
-    st.info("Please log in with Google.")
-    st.stop()
-
-config = {
-    "client_id": GOOGLE_CLIENT_ID,
-    "client_secret": GOOGLE_CLIENT_SECRET,
-    "redirect_uri": "https://YOUR-APP-NAME.streamlit.app",  # replace with your deployed app URL
-    "scope": ["openid", "email", "profile"]
-}
-
-authenticator = Authenticate(
-    config=config,
-    cookie_name="nepal_tourist_guide_auth",
-    cookie_expiry_days=1
+    redirect_uri="https://YOUR-APP-NAME.streamlit.app"  # Replace with your deployed URL
 )
 
-name, auth_status, user = authenticator.login("Login with Google", "main", oauth2=True)
+# Run login flow
+user = oauth.login()
 
-if auth_status:
-    st.success(f"Welcome, {name}!")
-
-elif auth_status is False:
-    st.error("Login failed. Try again.")
-    st.stop()
-else:
-    st.info("Please login to continue.")
+if not user:
+    st.info("Please log in with Google to continue.")
     st.stop()
 
-# ------------------ LOAD DATA ------------------
+# User is logged in
+st.success(f"Welcome, {user['name']}!")
+
+# --------------- Load data ---------------
 DATA_FILE = Path("places.json")
 TRANSLATION_FILE = Path("translations.json")
-USERS_FILE = Path("users.json")  # optional backup login
 
 def load_json(path, default):
     if not path.exists():
@@ -65,9 +42,8 @@ def load_json(path, default):
 
 DATA = load_json(DATA_FILE, {"places": [], "itineraries": []})
 TRANSLATIONS = load_json(TRANSLATION_FILE, {"English": {}, "Nepali": {}})
-USERS = load_json(USERS_FILE, {})
 
-# ------------------ LANGUAGE ------------------
+# --------------- Language selection ---------------
 lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
 def t(key):
     return TRANSLATIONS.get(lang, {}).get(key, key)
@@ -75,9 +51,9 @@ def t(key):
 st.set_page_config(page_title=t("Nepal Tourist Guide"), layout="wide")
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
-st.sidebar.markdown(f"👤 **{name}**")
+st.sidebar.markdown(f"👤 **{user['name']}**")
 
-# ------------------ FILTERS ------------------
+# --------------- Filters ---------------
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -106,7 +82,7 @@ def matches(p):
 
 filtered_places = [p for p in DATA["places"] if matches(p)]
 
-# ------------------ MAP ------------------
+# --------------- Map ---------------
 st.subheader(t("Map View"))
 m = folium.Map(location=[27.7, 85.3], zoom_start=7)
 
@@ -115,7 +91,7 @@ for p in filtered_places:
 
 st_folium(m, width=800, height=450)
 
-# ------------------ PLACES ------------------
+# --------------- Places ---------------
 st.subheader(t("Places"))
 
 for p in filtered_places:
@@ -129,7 +105,7 @@ for p in filtered_places:
         maps_url = f'https://www.google.com/maps?q={p["lat"]},{p["lng"]}'
         st.link_button(t("Open in Google Maps"), maps_url)
 
-# ------------------ ITINERARIES ------------------
+# --------------- Itineraries ---------------
 st.subheader(t("Itineraries"))
 
 for it in DATA["itineraries"]:
@@ -141,4 +117,3 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
-
