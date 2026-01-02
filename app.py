@@ -24,7 +24,7 @@ if "user" not in st.session_state:
             st.success("Login successful!")
             st.experimental_rerun()
         else:
-            st.error("Invalid credentials")
+            st.error("Wrong Password Try Again !!!")
     st.stop()
 
 # Language toggle
@@ -84,3 +84,4 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Add data by editing places.json. You can later connect an admin UI."))
+
