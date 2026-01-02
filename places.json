@@ -32,7 +32,7 @@
       "id": "ktm-1d",
       "name": "Kathmandu highlights",
       "days": 1,
-      "districts": ["Kathmandu"],
+      "districts": ["Kathmandu", "Bhaktapur"],
       "stops": ["pashupatinath", "bhaktapur-durbar"]
     }
   ]
