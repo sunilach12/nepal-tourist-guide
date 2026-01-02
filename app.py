@@ -3,15 +3,43 @@ import json
 from pathlib import Path
 import folium
 from streamlit_folium import st_folium
+import os
+from streamlit_authenticator import Authenticate
 
-# ------------------ CONFIG ------------------
-st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
+# ------------------ GOOGLE OAUTH LOGIN ------------------
+GOOGLE_CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
+GOOGLE_CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
 
+config = {
+    "client_id": GOOGLE_CLIENT_ID,
+    "client_secret": GOOGLE_CLIENT_SECRET,
+    "redirect_uri": "https://YOUR-APP-NAME.streamlit.app",  # replace with your deployed app URL
+    "scope": ["openid", "email", "profile"]
+}
+
+authenticator = Authenticate(
+    config=config,
+    cookie_name="nepal_tourist_guide_auth",
+    cookie_expiry_days=1
+)
+
+name, auth_status, user = authenticator.login("Login with Google", "main", oauth2=True)
+
+if auth_status:
+    st.success(f"Welcome, {name}!")
+
+elif auth_status is False:
+    st.error("Login failed. Try again.")
+    st.stop()
+else:
+    st.info("Please login to continue.")
+    st.stop()
+
+# ------------------ LOAD DATA ------------------
 DATA_FILE = Path("places.json")
 TRANSLATION_FILE = Path("translations.json")
-USERS_FILE = Path("users.json")
+USERS_FILE = Path("users.json")  # optional backup login
 
-# ------------------ SAFE JSON LOADER ------------------
 def load_json(path, default):
     if not path.exists():
         return default
@@ -24,32 +52,15 @@ DATA = load_json(DATA_FILE, {"places": [], "itineraries": []})
 TRANSLATIONS = load_json(TRANSLATION_FILE, {"English": {}, "Nepali": {}})
 USERS = load_json(USERS_FILE, {})
 
-# ------------------ LOGIN ------------------
-if "user" not in st.session_state:
-    st.title("🔐 Nepal Tourist Guide Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        if username in USERS and USERS[username] == password:
-            st.session_state.user = username
-            st.success("Login successful!")
-            st.experimental_rerun()
-        else:
-            st.error("Wrong username or password")
-
-    st.stop()
-
 # ------------------ LANGUAGE ------------------
 lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
-
 def t(key):
     return TRANSLATIONS.get(lang, {}).get(key, key)
 
-# ------------------ HEADER ------------------
+st.set_page_config(page_title=t("Nepal Tourist Guide"), layout="wide")
 st.title(t("Nepal Tourist Guide"))
-st.caption(t("Discover places, plan itineraries, and explore maps."))
-st.sidebar.markdown(f"👤 **{st.session_state.user}**")
+st.caption(t("Discover places across districts, plan itineraries, and view maps."))
+st.sidebar.markdown(f"👤 **{name}**")
 
 # ------------------ FILTERS ------------------
 col1, col2, col3 = st.columns(3)
@@ -85,10 +96,7 @@ st.subheader(t("Map View"))
 m = folium.Map(location=[27.7, 85.3], zoom_start=7)
 
 for p in filtered_places:
-    folium.Marker(
-        [p["lat"], p["lng"]],
-        popup=p["name"]
-    ).add_to(m)
+    folium.Marker([p["lat"], p["lng"]], popup=p["name"]).add_to(m)
 
 st_folium(m, width=800, height=450)
 
@@ -103,7 +111,6 @@ for p in filtered_places:
         st.write(f'💡 {t("Tips")}: {p.get("tips", "—")}')
         if p.get("images"):
             st.image(p["images"], width=300)
-
         maps_url = f'https://www.google.com/maps?q={p["lat"]},{p["lng"]}'
         st.link_button(t("Open in Google Maps"), maps_url)
 
