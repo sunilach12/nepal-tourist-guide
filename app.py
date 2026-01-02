@@ -5,15 +5,13 @@ import folium
 from streamlit_folium import st_folium
 from authlib.integrations.requests_client import OAuth2Session
 
-
-# ------------------ 1. PAGE CONFIG MUST BE FIRST ------------------
+# ------------------ 1. PAGE CONFIG ------------------
 st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
 
 # ------------------ GOOGLE OAUTH CONFIG ------------------
 CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
-# Ensure this matches exactly what is in Google Cloud Console
-REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app" 
+REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app"  # replace with your deployed URL
 
 AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -35,46 +33,55 @@ def get_userinfo(token):
     resp = client.get(USERINFO_ENDPOINT)
     return resp.json()
 
-# ------------------ LOGIN FLOW (CORRECTED) ------------------
-
-# 1. Initialize session state for user info
+# ------------------ LOGIN FLOW ------------------
 if "user_info" not in st.session_state:
     st.session_state.user_info = None
 
-# 2. Check for auth code in URL (works with newer Streamlit versions)
 code = st.query_params.get("code")
 
-# 3. Decision Logic
+# --- Decide login state ---
 if st.session_state.user_info:
-    # Case A: Already logged in
     user_info = st.session_state.user_info
 
 elif code:
-    # Case B: Returning from Google with a code
     try:
         token = fetch_token(code)
         user_info = get_userinfo(token)
-        
-        # Save to session state so we stay logged in
         st.session_state.user_info = user_info
-        
-        # CRITICAL: Clear the code from URL and rerun to prevent the error
         st.query_params.clear()
-        st.rerun()
-        
+        st.experimental_rerun()
     except Exception as e:
-        # If the code was invalid (e.g. refresh), clear it and show login again
         st.error(f"Login error: {e}")
         st.query_params.clear()
-        # Optional: st.stop() or let it fall through to login button
 
 else:
-    # Case C: Not logged in, no code -> Show Login Button
-    # Stop execution here so the rest of the app doesn't load
-    login_url = get_authorization_url()
+    # ------------------ LOGIN PAGE ------------------
     st.title("Nepal Tourist Guide")
     st.write("Please log in to continue.")
-    st.link_button("Login with Google", login_url)
+
+    # --- Username/Password Login ---
+    st.subheader("Login with Username/Password")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        # Example credentials
+        valid_users = {"admin": "1234", "guest": "guest"}  # replace with your users
+        if username in valid_users and valid_users[username] == password:
+            st.session_state.user_info = {"name": username}
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password")
+
+    st.markdown("---")
+
+    # --- Google Login ---
+    st.subheader("Or login with Google")
+    login_url = get_authorization_url()
+    st.markdown(
+        f'<a href="{login_url}" style="display: inline-flex; align-items: center; text-decoration: none; background-color: #4285F4; color: white; padding: 8px 12px; border-radius: 4px;">'
+        f'<img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" style="margin-right:8px;"> Login with Google</a>',
+        unsafe_allow_html=True
+    )
     st.stop()
 
 # ------------------ LOGOUT BUTTON ------------------
@@ -84,8 +91,7 @@ if st.sidebar.button("Logout"):
     st.session_state.user_info = None
     st.experimental_rerun()
 
-# ------------------ APP CONTENT (Only runs if logged in) ------------------
-
+# ------------------ APP CONTENT ------------------
 st.success(f"Welcome, {user_info['name']}!")
 
 # ------------------ LOAD DATA ------------------
