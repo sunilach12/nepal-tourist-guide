@@ -12,7 +12,7 @@ st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
 CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
 # Ensure this matches exactly what is in Google Cloud Console
-REDIRECT_URI = "https://nepal-tourist-guide-xyz123.streamlit.app" 
+REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app" 
 
 AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -168,3 +168,4 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
+
