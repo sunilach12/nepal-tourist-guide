@@ -5,10 +5,25 @@ import folium
 from streamlit_folium import st_folium
 import os
 from streamlit_authenticator import Authenticate
+from streamlit_oauth import OAuth
 
 # ------------------ GOOGLE OAUTH LOGIN ------------------
 GOOGLE_CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
+
+oauth = OAuth(
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    redirect_uri="https://YOUR-APP-NAME.streamlit.app" 
+)# replace with your app URL
+user = oauth.login()
+
+if user:
+    st.success(f"Welcome, {user['name']}!")
+    # Your full app code here
+else:
+    st.info("Please log in with Google.")
+    st.stop()
 
 config = {
     "client_id": GOOGLE_CLIENT_ID,
@@ -126,3 +141,4 @@ for it in DATA["itineraries"]:
 
 st.divider()
 st.caption(t("Edit places.json to add more data."))
+
