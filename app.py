@@ -5,13 +5,13 @@ import folium
 from streamlit_folium import st_folium
 from authlib.integrations.requests_client import OAuth2Session
 
-# ------------------ PAGE CONFIG ------------------
+# ------------------ 1. PAGE CONFIG ------------------
 st.set_page_config(page_title="Nepal Tourist Guide", layout="wide")
 
 # ------------------ GOOGLE OAUTH CONFIG ------------------
 CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
-REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app"  # Replace with your app URL
+REDIRECT_URI = "https://nepal-tourist-guide.streamlit.app"  # replace with your deployed URL
 
 AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
@@ -33,97 +33,130 @@ def get_userinfo(token):
     resp = client.get(USERINFO_ENDPOINT)
     return resp.json()
 
-# ------------------ SESSION STATE ------------------
+# ------------------ LOGIN FLOW ------------------
+if "user_info" not in st.session_state:
+    st.session_state.user_info = None
+
+code = st.query_params.get("code")
+
+# --- Decide login state ---
+if st.session_state.user_info:
+    user_info = st.session_state.user_info
+
+elif code:
+    try:
+        token = fetch_token(code)
+        user_info = get_userinfo(token)
+        st.session_state.user_info = user_info
+        st.query_params.clear()
+        st.experimental_rerun()
+    except Exception as e:
+        st.error(f"Login error: {e}")
+        st.query_params.clear()
+
+else:
+    # ------------------ LOGIN PAGE ------------------
+    st.title("Nepal Tourist Guide")
+    st.write("Please log in to continue.")
+
+    # --- Username/Password Login ---
+    st.subheader("Login with Username/Password")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        # Example credentials
+        valid_users = {"admin": "1234", "guest": "guest"}  # replace with your users
+        if username in valid_users and valid_users[username] == password:
+            st.session_state.user_info = {"name": username}
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password")
+
+    st.markdown("---")
+    # ------------------ LOGIN / SIGNUP ------------------
+st.subheader("Login / Sign Up")
+
+# Initialize session state
 if "users_db" not in st.session_state:
     st.session_state.users_db = {"admin": "Admin1234"}  # default user
 if "user_info" not in st.session_state:
     st.session_state.user_info = None
 
-# ------------------ CHECK GOOGLE CODE ------------------
-code = st.experimental_get_query_params().get("code")
-if code:
-    try:
-        token = fetch_token(code[0])
-        user_info = get_userinfo(token)
-        st.session_state.user_info = user_info  # save to session
-        st.experimental_set_query_params()  # clear code from URL
-        st.experimental_rerun()
-    except Exception as e:
-        st.error(f"Google login failed: {e}")
+# Tabs for login/signup
+login_tab, signup_tab = st.tabs(["Login", "Sign Up"])
 
-# ------------------ SHOW LOGIN / SIGNUP IF NOT LOGGED IN ------------------
-if not st.session_state.user_info:
-    st.title("Nepal Tourist Guide")
-    st.write("Please log in to continue.")
+# ------------------ LOGIN TAB ------------------
+with login_tab:
+    username = st.text_input("Username", key="login_user")
+    password = st.text_input("Password", type="password", key="login_pass")
+    if st.button("Login"):
+        if username in st.session_state.users_db and st.session_state.users_db[username] == password:
+            st.session_state.user_info = {"name": username}
+            st.success(f"Welcome, {username}!")
+            # Only rerun if session_state updated
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password")
 
-    # Tabs for Login / Signup
-    login_tab, signup_tab = st.tabs(["Login", "Sign Up"])
-
-    # -------- LOGIN TAB --------
-    with login_tab:
-        username = st.text_input("Username", key="login_user")
-        password = st.text_input("Password", type="password", key="login_pass")
-        if st.button("Login"):
-            if username in st.session_state.users_db and st.session_state.users_db[username] == password:
-                st.session_state.user_info = {"name": username}
-                st.success(f"Welcome, {username}!")
-                st.experimental_rerun()
-            else:
-                st.error("Invalid username or password")
-
-        st.markdown("---")
-        # -------- GOOGLE LOGIN BUTTON --------
-        login_url = get_authorization_url()
-        st.markdown(f"[Login with Google]( {login_url} )")
-
-    # -------- SIGNUP TAB --------
-    with signup_tab:
-        st.markdown("""
+# ------------------ SIGNUP TAB ------------------
+with signup_tab:
+    st.markdown("""
 **Signup Rules:**  
 - Username must be lowercase letters only  
 - Maximum 15 characters  
 - Password must include at least one number  
 - Confirm password must match
 """)
-        new_user = st.text_input("Choose Username", key="signup_user")
-        new_pass = st.text_input("Choose Password", type="password", key="signup_pass")
-        confirm_pass = st.text_input("Confirm Password", type="password", key="signup_confirm")
+    new_user = st.text_input("Choose Username", key="signup_user")
+    new_pass = st.text_input("Choose Password", type="password", key="signup_pass")
+    confirm_pass = st.text_input("Confirm Password", type="password", key="signup_confirm")
 
-        if st.button("Sign Up"):
-            if not new_user.islower():
-                st.error("Username must be lowercase letters only")
-            elif len(new_user) > 15:
-                st.error("Username cannot exceed 15 characters")
-            elif any(char.isdigit() for char in new_user):
-                st.error("Username cannot contain numbers")
-            elif len(new_pass) < 6:
-                st.error("Password must be at least 6 characters")
-            elif not any(char.isdigit() for char in new_pass):
-                st.error("Password must contain at least one number")
-            elif new_pass != confirm_pass:
-                st.error("Passwords do not match")
-            elif new_user in st.session_state.users_db:
-                st.error("Username already exists")
-            else:
-                st.session_state.users_db[new_user] = new_pass
-                st.success("Account created! Switch to Login to continue.")
-                # Clear signup fields
-                st.session_state.signup_user = ""
-                st.session_state.signup_pass = ""
-                st.session_state.signup_confirm = ""
+    if st.button("Sign Up"):
+        # Validation
+        if not new_user.islower():
+            st.error("Username must be lowercase letters only")
+        elif len(new_user) > 15:
+            st.error("Username cannot exceed 15 characters")
+        elif any(char.isdigit() for char in new_user):
+            st.error("Username cannot contain numbers")
+        elif len(new_pass) < 6:
+            st.error("Password must be at least 6 characters")
+        elif not any(char.isdigit() for char in new_pass):
+            st.error("Password must contain at least one number")
+        elif new_pass != confirm_pass:
+            st.error("Passwords do not match")
+        elif new_user in st.session_state.users_db:
+            st.error("Username already exists")
+        else:
+            # Save new user
+            st.session_state.users_db[new_user] = new_pass
+            st.success("Account created successfully! You can now login.")
+            # Clear signup fields to prevent accidental rerun issues
+            st.session_state.signup_user = ""
+            st.session_state.signup_pass = ""
+            st.session_state.signup_confirm = ""
 
-    st.stop()  # Stop app execution until user logs in
 
-# ------------------ MAIN APP ------------------
-user_info = st.session_state.user_info
+    # --- Google Login ---
+    st.subheader("Or login with Google")
+    login_url = get_authorization_url()
+    st.markdown(
+        f'<a href="{login_url}" style="display: inline-flex; align-items: center; text-decoration: none; background-color: #4285F4; color: white; padding: 8px 12px; border-radius: 4px;">'
+        f'<img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" style="margin-right:8px;"> Login with Google</a>',
+        unsafe_allow_html=True
+    )
+    st.stop()
+    
+
+# ------------------ LOGOUT BUTTON ------------------
 st.sidebar.markdown(f"👤 **{user_info['name']}**")
 st.sidebar.markdown("---")
 if st.sidebar.button("Logout"):
     st.session_state.user_info = None
     st.experimental_rerun()
 
-st.title(f"Welcome, {user_info['name']}!")
-st.caption("Discover places across districts, plan itineraries, and view maps.")
+# ------------------ APP CONTENT ------------------
+st.success(f"Welcome, {user_info['name']}!")
 
 # ------------------ LOAD DATA ------------------
 DATA_FILE = Path("places.json")
@@ -148,3 +181,86 @@ def t(key):
 st.title(t("Nepal Tourist Guide"))
 st.caption(t("Discover places across districts, plan itineraries, and view maps."))
 
+# ------------------ LANGUAGE ------------------
+lang = st.sidebar.selectbox("🌐 Language", ["English", "Nepali"])
+def t(key):
+    return TRANSLATIONS.get(lang, {}).get(key, key)
+
+st.title(t("Nepal Tourist Guide"))
+st.caption(t("Discover places across districts, plan itineraries, and view maps."))
+
+# ------------------ CONTACT INFORMATION ------------------
+st.sidebar.markdown("---")
+st.sidebar.subheader("📞 Contact Info")
+st.sidebar.markdown("""
+**Police:** 100  
+**Emergency:** 112  
+**Tourist Office:** +977-1-4212345  
+**Email:** info@nepaltouristguide.com  
+**Address:** Kathmandu, Nepal
+""")
+
+# ------------------ FILTERS ------------------
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    district = st.selectbox(
+        t("District"),
+        ["All"] + sorted({p["district"] for p in DATA["places"]})
+    )
+
+with col2:
+    category = st.selectbox(
+        t("Category"),
+        ["All"] + sorted({p["category"] for p in DATA["places"]})
+    )
+
+with col3:
+    search = st.text_input(t("Search"))
+
+def matches(p):
+    if district != "All" and p["district"] != district:
+        return False
+    if category != "All" and p["category"] != category:
+        return False
+    if search and search.lower() not in (p["name"] + " " + p.get("tips", "")).lower():
+        return False
+    return True
+
+filtered_places = [p for p in DATA["places"] if matches(p)]
+
+# ------------------ MAP ------------------
+st.subheader(t("Map View"))
+m = folium.Map(location=[27.7, 85.3], zoom_start=7)
+
+for p in filtered_places:
+    folium.Marker([p["lat"], p["lng"]], popup=p["name"]).add_to(m)
+
+st_folium(m, width=800, height=450)
+
+# ------------------ PLACES ------------------
+st.subheader(t("Places"))
+
+for p in filtered_places:
+    with st.expander(f'{p["name"]} — {p["district"]} ({p["category"]})'):
+        st.write(p["description"])
+        st.write(f'🕒 {t("Hours")}: {p["hours"]}')
+        st.write(f'💰 {t("Fees")}: {p["fees"]}')
+        st.write(f'💡 {t("Tips")}: {p.get("tips", "—")}')
+        if p.get("images"):
+            st.image(p["images"], width=300)
+        maps_url = f'https://www.google.com/maps?q={p["lat"]},{p["lng"]}'
+        st.markdown(f"[{t('Open in Google Maps')}]({maps_url})")
+
+# ------------------ ITINERARIES ------------------
+st.subheader(t("Itineraries"))
+
+for it in DATA["itineraries"]:
+    with st.expander(f'{it["name"]} — {it["days"]} {t("days")}'):
+        for pid in it["stops"]:
+            place = next((x for x in DATA["places"] if x["id"] == pid), None)
+            if place:
+                st.markdown(f"- {place['name']} ({place['district']})")
+
+st.divider()
+st.caption(t("Edit places.json to add more data."))
